@@ -1,19 +1,16 @@
 #include <iostream>
-#include "copyToolFactory.h"
+#include <memory>
+#include "interprocessCopyToolFactory.h"
 
-int main(int argc, char* argv[])
-{
-   if (argc != 3) 
-   {
-        std::cerr << "Usage: " << argv[0] << " <source file> <destination file>" << std::endl;
-        return 1;
-   }
+int main(int argc, char* argv[]) {
+    std::string sourcePath = "source.txt";      
+    std::string destPath = "destination.txt";   
+    std::string sharedMemoryName = "MySharedMemory"; 
 
-    const std::string sourcePath = argv[1];
-    const std::string destPath = argv[2];
+ 
+    InterprocessCopyToolFactory factory(sharedMemoryName);
+    std::unique_ptr<CopyToolInterface> copyTool = factory.createCopyTool();
 
-    CopyToolFactory factory;
-    auto copyTool = factory.createCopyTool();
     copyTool->copy(sourcePath, destPath);
 
     return 0;

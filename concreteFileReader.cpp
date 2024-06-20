@@ -1,26 +1,22 @@
 #include "concreteFileReader.h"
-#include <iostream>
+
+ConcreteFileReader::ConcreteFileReader() {}
 
 ConcreteFileReader::~ConcreteFileReader() 
 {
-    if (file.is_open()) 
+    if (fileStream.is_open()) 
     {
-        file.close();
+        fileStream.close();
     }
 }
 
 void ConcreteFileReader::open(const std::string& filePath) 
 {
-    file.open(filePath, std::ios::binary);
-    if (!file.is_open()) 
-    {
-        std::cerr << "Failed to open source file: " << filePath << std::endl;
-    }
+    fileStream.open(filePath, std::ios::binary);
 }
 
-size_t ConcreteFileReader::read(char* buffer, size_t size) 
+size_t ConcreteFileReader::read(char* buffer, size_t bufferSize)
 {
-    if (!file.is_open()) return 0;
-    file.read(buffer, size);
-    return file.gcount();
+    fileStream.read(buffer, bufferSize);
+    return fileStream.gcount();
 }

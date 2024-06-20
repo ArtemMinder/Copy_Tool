@@ -1,16 +1,21 @@
 #pragma once
 
-#include "abstractFileWriter.h"
+#include <string>
 #include <fstream>
 
-class ConcreteFileWriter : public AbstractFileWriter 
+class ConcreteFileWriter 
 {
 public:
+    ConcreteFileWriter();
     ~ConcreteFileWriter();
-    void open(const std::string& filePath) override;
-    void write(const char* buffer, size_t size) override;
+
+    void open(const std::string& filePath);
+    void write(const char* buffer, size_t size);
 
 private:
-    std::ofstream file;
+    std::ofstream fileStream;
 };
+
+
+
 

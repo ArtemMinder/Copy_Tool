@@ -9,4 +9,3 @@ public:
     virtual ~AbstractCopyToolFactory() = default;
     virtual std::unique_ptr<CopyToolInterface> createCopyTool() const = 0;
 };
-

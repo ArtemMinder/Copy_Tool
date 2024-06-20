@@ -1,16 +1,21 @@
 #pragma once
 
-#include "abstractFileReader.h"
+#include <string>
 #include <fstream>
 
-class ConcreteFileReader : public AbstractFileReader 
+class ConcreteFileReader 
 {
 public:
+    ConcreteFileReader();
     ~ConcreteFileReader();
-    void open(const std::string& filePath) override;
-    size_t read(char* buffer, size_t size) override;
+
+    void open(const std::string& filePath);
+    size_t read(char* buffer, size_t bufferSize);
 
 private:
-    std::ifstream file;
+    std::ifstream fileStream;
 };
+
+
+
 

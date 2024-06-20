@@ -1,27 +1,21 @@
 #include "concreteFileWriter.h"
-#include <iostream>
+
+ConcreteFileWriter::ConcreteFileWriter() {}
 
 ConcreteFileWriter::~ConcreteFileWriter() 
 {
-    if (file.is_open()) 
+    if (fileStream.is_open()) 
     {
-        file.close();
+        fileStream.close();
     }
 }
 
 void ConcreteFileWriter::open(const std::string& filePath) 
 {
-    file.open(filePath, std::ios::binary);
-    if (!file.is_open()) 
-    {
-        std::cerr << "Failed to open destination file: " << filePath << std::endl;
-    }
+    fileStream.open(filePath, std::ios::binary);
 }
 
 void ConcreteFileWriter::write(const char* buffer, size_t size) 
 {
-    if (file.is_open()) 
-    {
-        file.write(buffer, size);
-    }
+    fileStream.write(buffer, size);
 }
