@@ -1,17 +1,41 @@
+#include "InterprocessCopyTool.h"
+#include "InterprocessBuffer.h"
+#include "FileReader.h"
+#include "FileWriter.h"
+#include "Logger.h"
 #include <iostream>
 #include <memory>
-#include "interprocessCopyToolFactory.h"
+#include <stdexcept>
 
-int main(int argc, char* argv[]) {
-    std::string sourcePath = "source.txt";      
-    std::string destPath = "destination.txt";   
-    std::string sharedMemoryName = "MySharedMemory"; 
+int main(int argc, char* argv[]) 
+{
+    if (argc != 4) 
+    {
+        std::cerr << "Usage: " << argv[0] << " <sourcePath> <destPath> <sharedMemoryName>" << std::endl;
+        return 1;
+    }
 
- 
-    InterprocessCopyToolFactory factory(sharedMemoryName);
-    std::unique_ptr<CopyToolInterface> copyTool = factory.createCopyTool();
+    const std::string sourcePath = argv[1];
+    const std::string destPath = argv[2];
+    const std::string sharedMemoryName = argv[3];
+    const size_t bufferSize = 65536;
 
-    copyTool->copy(sourcePath, destPath);
+    try 
+    {
+        std::unique_ptr<AbstractBuffer> buffer = std::make_unique<InterprocessBuffer>(sharedMemoryName, bufferSize);
+        std::unique_ptr<IReader> reader = std::make_unique<FileReader>();
+        std::unique_ptr<IWriter> writer = std::make_unique<FileWriter>();
+
+        Logger logger("copy.log");
+        InterprocessCopyTool tool(sharedMemoryName, std::move(buffer), std::move(reader), std::move(writer), logger);
+        tool.copy(sourcePath, destPath);
+
+    }
+    catch (const std::exception& e) 
+    {
+        std::cerr << "Error: " << e.what() << std::endl;
+        return 1;
+    }
 
     return 0;
 }

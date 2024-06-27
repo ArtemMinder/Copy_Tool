@@ -1,83 +1,39 @@
-#include "interprocessCopyTool.h"
-#include "concreteFileReader.h"
-#include "concreteFileWriter.h"
-#include <iostream>
-#include <boost/interprocess/allocators/allocator.hpp>
-#include <boost/interprocess/containers/string.hpp>
-#include <boost/interprocess/containers/vector.hpp>
-#include <boost/interprocess/managed_shared_memory.hpp>
-#include <mutex>
+#include "InterprocessCopyTool.h"
+#include <stdexcept>
 
-InterprocessCopyTool::InterprocessCopyTool(const std::string& sharedMemoryName, bool isReader)
-    : sharedMemoryName(sharedMemoryName), isReader(isReader), sharedMemory(boost::interprocess::open_or_create, sharedMemoryName.c_str(), 65536) 
-{
-    if (isReader) 
-    {
-        sharedBuffer = sharedMemory.find_or_construct<SharedBuffer>("SharedBuffer")();
-        sharedBuffer->doneReading = false;
-        sharedBuffer->size = 0;
-    }
-    else 
-    {
-        sharedBuffer = nullptr;
-    }
-}
+InterprocessCopyTool::InterprocessCopyTool(const std::string& sharedMemoryName, std::unique_ptr<AbstractBuffer> buffer,
+    std::unique_ptr<IReader> reader, std::unique_ptr<IWriter> writer, Logger& logger)
+    : sharedMemoryName(sharedMemoryName), buffer(std::move(buffer)), reader(std::move(reader)), writer(std::move(writer)),
+    logger(logger) {}
+
+InterprocessCopyTool::~InterprocessCopyTool() {}
 
 void InterprocessCopyTool::copy(const std::string& sourcePath, const std::string& destPath) 
 {
-    if (isReader) 
+    try 
     {
-        readFile(sourcePath);
-    }
-    else
-    {
-        writeFile(destPath);
-    }
-}
+        reader->open(sourcePath);
+        writer->open(destPath);
 
-void InterprocessCopyTool::readFile(const std::string& sourcePath) 
-{
-    ConcreteFileReader reader;
-    reader.open(sourcePath);
-
-    const size_t chunkSize = SharedBuffer::BufferSize;
-    std::vector<char> chunk(chunkSize);
-
-    while (true)
-    {
-        size_t bytesRead = reader.read(chunk.data(), chunkSize);
-        if (bytesRead == 0) break; // Конец файла
-
-        std::unique_lock<boost::interprocess::interprocess_mutex> lock(sharedBuffer->mutex);
-        sharedBuffer->condEmpty.wait(lock, [this] { return sharedBuffer->size == 0; });
-
-        std::copy(chunk.begin(), chunk.begin() + bytesRead, sharedBuffer->buffer);
-        sharedBuffer->size = bytesRead;
-        sharedBuffer->condFull.notify_one();
-    }
-
-    std::unique_lock<boost::interprocess::interprocess_mutex> lock(sharedBuffer->mutex);
-    sharedBuffer->doneReading = true;
-    sharedBuffer->condFull.notify_one();
-}
-
-void InterprocessCopyTool::writeFile(const std::string& destPath) 
-{
-    ConcreteFileWriter writer;
-    writer.open(destPath);
-
-    while (true) 
-    {
-        std::unique_lock<boost::interprocess::interprocess_mutex> lock(sharedBuffer->mutex);
-        sharedBuffer->condFull.wait(lock, [this] { return sharedBuffer->size > 0 || sharedBuffer->doneReading; });
-
-        if (sharedBuffer->size == 0 && sharedBuffer->doneReading) 
+        char data[4096];
+        size_t bytesRead;
+        while ((bytesRead = reader->read(data, sizeof(data))) > 0) 
         {
-            break; // Все данные прочитаны и записаны
+            buffer->write(data, bytesRead);
+            size_t bytesWritten;
+            while ((bytesWritten = buffer->read(data, sizeof(data))) > 0) 
+            {
+                writer->write(data, bytesWritten);
+            }
+            throw std::runtime_error("Simulated error after first memory block operation");
         }
 
-        writer.write(sharedBuffer->buffer, sharedBuffer->size);
-        sharedBuffer->size = 0;
-        sharedBuffer->condEmpty.notify_one();
+        reader->close();
+        writer->close();
+    }
+    catch (const std::exception& e) 
+    {
+        logger.log("Exception caught during copy operation: " + std::string(e.what()));
+        throw;
     }
 }

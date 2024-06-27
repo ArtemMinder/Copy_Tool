@@ -1,43 +1,26 @@
 #pragma once
 
-#include "copyToolInterface.h"
+#include "AbstractBuffer.h"
+#include "IReader.h"
+#include "IWriter.h"
+#include "Logger.h"
+#include <memory>
 #include <string>
-#include <boost/interprocess/managed_shared_memory.hpp>
-#include <boost/interprocess/sync/interprocess_mutex.hpp>
-#include <boost/interprocess/sync/interprocess_condition.hpp>
 
-class InterprocessCopyTool : public CopyToolInterface 
+class InterprocessCopyTool 
 {
 public:
-    InterprocessCopyTool(const std::string& sharedMemoryName, bool isReader);
-    void copy(const std::string& sourcePath, const std::string& destPath) override;
+    InterprocessCopyTool(const std::string& sharedMemoryName, std::unique_ptr<AbstractBuffer> buffer,
+        std::unique_ptr<IReader> reader, std::unique_ptr<IWriter> writer, Logger& logger);
+    ~InterprocessCopyTool();
+
+    void copy(const std::string& sourcePath, const std::string& destPath);
 
 private:
-    void readFile(const std::string& sourcePath);
-    void writeFile(const std::string& destPath);
-
     std::string sharedMemoryName;
-    bool isReader;
-
-    struct SharedBuffer 
-    {
-        enum { BufferSize = 16 };
-        char buffer[BufferSize];
-        size_t size;
-        bool doneReading;
-        boost::interprocess::interprocess_mutex mutex;
-        boost::interprocess::interprocess_condition condEmpty;
-        boost::interprocess::interprocess_condition condFull;
-    };
-
-    boost::interprocess::managed_shared_memory sharedMemory;
-    SharedBuffer* sharedBuffer;
+    std::unique_ptr<AbstractBuffer> buffer;
+    std::unique_ptr<IReader> reader;
+    std::unique_ptr<IWriter> writer;
+    Logger& logger;
 };
-
-
-
-
-
-
-
 
