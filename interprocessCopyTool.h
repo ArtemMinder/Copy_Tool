@@ -1,26 +1,26 @@
 #pragma once
 
-#include "AbstractBuffer.h"
+#include "IBuffer.h"
 #include "IReader.h"
 #include "IWriter.h"
-#include "Logger.h"
+#include "ILogger.h"
 #include <memory>
-#include <string>
 
-class InterprocessCopyTool 
-{
+class InterprocessCopyTool {
 public:
-    InterprocessCopyTool(const std::string& sharedMemoryName, std::unique_ptr<AbstractBuffer> buffer,
-        std::unique_ptr<IReader> reader, std::unique_ptr<IWriter> writer, Logger& logger);
+    InterprocessCopyTool(const std::string& sharedMemoryName, 
+        std::unique_ptr<IBuffer> buffer, 
+        std::unique_ptr<IReader> reader,
+        std::unique_ptr<IWriter> writer,
+        std::shared_ptr<ILogger> logger);
     ~InterprocessCopyTool();
 
     void copy(const std::string& sourcePath, const std::string& destPath);
 
 private:
     std::string sharedMemoryName;
-    std::unique_ptr<AbstractBuffer> buffer;
+    std::unique_ptr<IBuffer> buffer;
     std::unique_ptr<IReader> reader;
-    std::unique_ptr<IWriter> writer;
-    Logger& logger;
+    std::unique_ptr<IWriter> writer; 
+    std::shared_ptr<ILogger> logger;
 };
-

@@ -1,10 +1,10 @@
 #include "InterprocessCopyTool.h"
 #include <stdexcept>
 
-InterprocessCopyTool::InterprocessCopyTool(const std::string& sharedMemoryName, std::unique_ptr<AbstractBuffer> buffer,
-    std::unique_ptr<IReader> reader, std::unique_ptr<IWriter> writer, Logger& logger)
+InterprocessCopyTool::InterprocessCopyTool(const std::string& sharedMemoryName, std::unique_ptr<IBuffer> buffer, 
+    std::unique_ptr<IReader> reader, std::unique_ptr<IWriter> writer, std::shared_ptr<ILogger> logger)
     : sharedMemoryName(sharedMemoryName), buffer(std::move(buffer)), reader(std::move(reader)), writer(std::move(writer)),
-    logger(logger) {}
+    logger(std::move(logger)) {}
 
 InterprocessCopyTool::~InterprocessCopyTool() {}
 
@@ -33,7 +33,7 @@ void InterprocessCopyTool::copy(const std::string& sourcePath, const std::string
     }
     catch (const std::exception& e) 
     {
-        logger.log("Exception caught during copy operation: " + std::string(e.what()));
+        logger->log("Exception caught during copy operation: " + std::string(e.what()));
         throw;
     }
 }

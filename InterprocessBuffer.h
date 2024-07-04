@@ -1,11 +1,11 @@
 #pragma once
 
-#include "AbstractBuffer.h"
+#include "IBuffer.h"
 #include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/mapped_region.hpp>
 #include <string>
 
-class InterprocessBuffer : public AbstractBuffer 
+class InterprocessBuffer : public IBuffer 
 {
 public:
     InterprocessBuffer(const std::string& sharedMemoryName, size_t bufferSize);

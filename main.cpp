@@ -22,11 +22,11 @@ int main(int argc, char* argv[])
 
     try 
     {
-        std::unique_ptr<AbstractBuffer> buffer = std::make_unique<InterprocessBuffer>(sharedMemoryName, bufferSize);
+        std::unique_ptr<IBuffer> buffer = std::make_unique<InterprocessBuffer>(sharedMemoryName, bufferSize);
         std::unique_ptr<IReader> reader = std::make_unique<FileReader>();
         std::unique_ptr<IWriter> writer = std::make_unique<FileWriter>();
+        std::shared_ptr<ILogger> logger = std::make_shared<Logger>("copy.log");
 
-        Logger logger("copy.log");
         InterprocessCopyTool tool(sharedMemoryName, std::move(buffer), std::move(reader), std::move(writer), logger);
         tool.copy(sourcePath, destPath);
 
