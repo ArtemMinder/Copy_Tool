@@ -20,39 +20,6 @@ InterprocessCopyTool::~InterprocessCopyTool()
     logger->log("InterprocessCopyTool destroyed.");
 }
 
-/*void InterprocessCopyTool::copy(const std::string& sourcePath, const std::string& destPath) {
-    try {
-        logger->log("Start copying.");
-
-        reader->open(sourcePath);
-        writer->open(destPath);
-
-        constexpr size_t bufferSize = 1024;
-        char buffer[bufferSize];
-        size_t bytesRead;
-
-        do {
-            bytesRead = reader->read(buffer, bufferSize);
-            if (bytesRead > 0) {
-                writer->write(buffer, bytesRead);
-                buffer[bytesRead] = '\0'; // Ensure null-terminated if buffer is used as string
-                logger->log("Read and written " + std::to_string(bytesRead) + " bytes.");
-            }
-        } while (bytesRead > 0);
-
-        logger->log("Завершение копирования.");
-    }
-    catch (const std::exception& ex) {
-        logger->log("Error during copying: " + std::string(ex.what()));
-        throw; // Re-throw the exception for higher level handling
-    }
-
-    // Close resources
-    reader->close();
-    writer->close();
-}*/
-
-
 void InterprocessCopyTool::copy(const std::string& sourcePath, const std::string& destPath) {
     try {
         if (isReader) {
