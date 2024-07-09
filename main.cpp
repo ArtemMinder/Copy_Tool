@@ -1,39 +1,27 @@
-#include "InterprocessCopyTool.h"
-#include "InterprocessBuffer.h"
 #include "FileReader.h"
 #include "FileWriter.h"
-#include "Logger.h"
-#include <iostream>
+#include "InterprocessBuffer.h"
+#include "InterprocessCopyTool.h"
+#include "ConsoleLogger.h"
 #include <memory>
-#include <stdexcept>
 
-int main(int argc, char* argv[]) 
-{
-    if (argc != 4) 
-    {
-        std::cerr << "Usage: " << argv[0] << " <sourcePath> <destPath> <sharedMemoryName>" << std::endl;
-        return 1;
+int main() {
+    std::string sourcePath = "source.txt";
+    std::string destPath = "target.txt";
+    std::string sharedMemoryName = "shared_memory";
+
+    std::shared_ptr<ILogger> logger = std::make_shared<ConsoleLogger>();
+    std::unique_ptr<IReader> reader = std::make_unique<FileReader>();
+    std::unique_ptr<IWriter> writer = std::make_unique<FileWriter>();
+    std::unique_ptr<IBuffer> buffer = std::make_unique<InterprocessBuffer>(sharedMemoryName);
+
+    InterprocessCopyTool copyTool(std::move(reader), std::move(writer), std::move(buffer), logger);
+
+    try {
+        copyTool.copy(sourcePath, destPath);
     }
-
-    const std::string sourcePath = argv[1];
-    const std::string destPath = argv[2];
-    const std::string sharedMemoryName = argv[3];
-    const size_t bufferSize = 65536;
-
-    try 
-    {
-        std::unique_ptr<IBuffer> buffer = std::make_unique<InterprocessBuffer>(sharedMemoryName, bufferSize);
-        std::unique_ptr<IReader> reader = std::make_unique<FileReader>();
-        std::unique_ptr<IWriter> writer = std::make_unique<FileWriter>();
-        std::shared_ptr<ILogger> logger = std::make_shared<Logger>("copy.log");
-
-        InterprocessCopyTool tool(sharedMemoryName, std::move(buffer), std::move(reader), std::move(writer), logger);
-        tool.copy(sourcePath, destPath);
-
-    }
-    catch (const std::exception& e) 
-    {
-        std::cerr << "Error: " << e.what() << std::endl;
+    catch (const std::exception& ex) {
+        std::cerr << "Exception caught in main: " << ex.what() << std::endl;
         return 1;
     }
 

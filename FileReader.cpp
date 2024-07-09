@@ -1,29 +1,17 @@
 #include "FileReader.h"
-#include <stdexcept>
 
-FileReader::FileReader() {}
-
-FileReader::~FileReader()
+void FileReader::open(const std::string& path)
 {
-    close();
-}
-
-void FileReader::open(const std::string& filename) 
-{
-    file.open(filename, std::ios::binary);
+    file.open(path, std::ios::binary);
     if (!file.is_open()) 
     {
-        throw std::runtime_error("Failed to open file: " + filename);
+        throw std::runtime_error("Cannot open file for reading: " + path);
     }
 }
 
-size_t FileReader::read(char* buffer, size_t bufferSize)
+size_t FileReader::read(char* buffer, size_t size) 
 {
-    file.read(buffer, bufferSize);
-    if (file.bad())
-    {
-        throw std::runtime_error("Failed to read from file");
-    }
+    file.read(buffer, size);
     return file.gcount();
 }
 

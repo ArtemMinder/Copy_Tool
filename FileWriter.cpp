@@ -1,32 +1,20 @@
 #include "FileWriter.h"
-#include <stdexcept>
 
-FileWriter::FileWriter() {}
-
-FileWriter::~FileWriter() 
+void FileWriter::open(const std::string& path) 
 {
-    close();
-}
-
-void FileWriter::open(const std::string& filename) 
-{
-    file.open(filename, std::ios::binary);
-    if (!file.is_open()) 
+    file.open(path, std::ios::binary);
+    if (!file.is_open())
     {
-        throw std::runtime_error("Failed to open file: " + filename);
+        throw std::runtime_error("Cannot open file for writing: " + path);
     }
 }
 
-void FileWriter::write(const char* data, size_t dataSize) 
+void FileWriter::write(const char* buffer, size_t size)
 {
-    file.write(data, dataSize);
-    if (file.bad()) 
-    {
-        throw std::runtime_error("Failed to write to file");
-    }
+    file.write(buffer, size);
 }
 
-void FileWriter::close() 
+void FileWriter::close()
 {
     if (file.is_open())
     {
