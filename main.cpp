@@ -1,29 +1,33 @@
-#include "FileReader.h"
-#include "FileWriter.h"
-#include "InterprocessBuffer.h"
-#include "InterprocessCopyTool.h"
-#include "ConsoleLogger.h"
+#include <iostream>
 #include <memory>
+#include <string>
+#include "InterprocessCopyToolFactory.h"
+#include "ConsoleLogger.h"
 
-int main() {
-    std::string sourcePath = "source.txt";
-    std::string destPath = "target.txt";
-    std::string sharedMemoryName = "shared_memory";
+int main(int argc, char* argv[]) {
+    if (argc != 4) {
+        std::cerr << "Usage: " << argv[0] << " <source> <destination> <shared_memory_name>" << std::endl;
+        return 1;
+    }
 
-    std::shared_ptr<ILogger> logger = std::make_shared<ConsoleLogger>();
-    std::unique_ptr<IReader> reader = std::make_unique<FileReader>();
-    std::unique_ptr<IWriter> writer = std::make_unique<FileWriter>();
-    std::unique_ptr<IBuffer> buffer = std::make_unique<InterprocessBuffer>(sharedMemoryName);
+    std::string sourcePath = argv[1];
+    std::string destPath = argv[2];
+    std::string sharedMemoryName = argv[3];
 
-    InterprocessCopyTool copyTool(std::move(reader), std::move(writer), std::move(buffer), logger);
+    auto logger = std::make_shared<ConsoleLogger>();
+    logger->log("Programm started.");
+
+    InterprocessCopyToolFactory factory(sharedMemoryName, logger);
+    auto copyTool = factory.createCopyTool();
 
     try {
-        copyTool.copy(sourcePath, destPath);
+        copyTool->copy(sourcePath, destPath);
     }
     catch (const std::exception& ex) {
         std::cerr << "Exception caught in main: " << ex.what() << std::endl;
         return 1;
     }
 
+    logger->log("Progremm finished.");
     return 0;
 }

@@ -1,8 +1,9 @@
 #include "InterprocessBuffer.h"
+#include <boost/interprocess/allocators/allocator.hpp>
+#include <boost/interprocess/containers/string.hpp>
 
 InterprocessBuffer::InterprocessBuffer(const std::string& name)
-    : name(name)
-{
+    : name(name) {
     using namespace boost::interprocess;
 
     shared_memory_object::remove(name.c_str());
@@ -10,53 +11,43 @@ InterprocessBuffer::InterprocessBuffer(const std::string& name)
     shm.truncate(sizeof(SharedData));
 
     region = mapped_region(shm, read_write);
-    sharedData = new (region.get_address()) SharedData;
-    sharedData->dataReady = false;
-    sharedData->doneReading = false;
+    void* addr = region.get_address();
+    shared_data = new (addr) SharedData;
 }
 
-InterprocessBuffer::~InterprocessBuffer() 
-{
+InterprocessBuffer::~InterprocessBuffer() {
     boost::interprocess::shared_memory_object::remove(name.c_str());
 }
 
-void InterprocessBuffer::write(const char* data, size_t size) 
-{
-    if (size > sizeof(sharedData->data)) 
-    {
-        throw std::runtime_error("Data size exceeds buffer size.");
-    }
-
-    boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> lock(sharedData->mutex);
-    std::memcpy(sharedData->data, data, size);
-    sharedData->dataReady = true;
-    sharedData->cond.notify_one();
-    sharedData->cond.wait(lock, [this] { return !sharedData->dataReady; });
+char* InterprocessBuffer::getData() {
+    return shared_data->data;
 }
 
-size_t InterprocessBuffer::read(char* data, size_t size) 
-{
-    boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> lock(sharedData->mutex);
-    sharedData->cond.wait(lock, [this] { return sharedData->dataReady || sharedData->doneReading; });
-    if (sharedData->doneReading && !sharedData->dataReady) 
-    {
-        return 0;
-    }
-    std::memcpy(data, sharedData->data, size);
-    sharedData->dataReady = false;
-    sharedData->cond.notify_one();
-    return size;
+size_t InterprocessBuffer::getSize() const {
+    return shared_data->size;
 }
 
-void InterprocessBuffer::setDoneReading(bool done)
-{
-    boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> lock(sharedData->mutex);
-    sharedData->doneReading = done;
-    sharedData->cond.notify_all();
+void InterprocessBuffer::setSize(size_t size) {
+    shared_data->size = size;
 }
 
-bool InterprocessBuffer::isDoneReading() const 
-{
-    boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> lock(sharedData->mutex);
-    return sharedData->doneReading;
+void InterprocessBuffer::setDoneReading(bool done) {
+    shared_data->done_reading = done;
+    shared_data->cond_read.notify_all();
+}
+
+bool InterprocessBuffer::isDoneReading() const {
+    return shared_data->done_reading;
+}
+
+boost::interprocess::interprocess_mutex& InterprocessBuffer::getMutex() {
+    return shared_data->mutex;
+}
+
+boost::interprocess::interprocess_condition& InterprocessBuffer::getCondRead() {
+    return shared_data->cond_read;
+}
+
+boost::interprocess::interprocess_condition& InterprocessBuffer::getCondWrite() {
+    return shared_data->cond_write;
 }
