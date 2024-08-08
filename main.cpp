@@ -4,7 +4,8 @@
 #include "InterprocessCopyToolFactory.h"
 #include "ConsoleLogger.h"
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) 
+{
     if (argc != 4) {
         std::cerr << "Usage: " << argv[0] << " <source> <destination> <shared_memory_name>" << std::endl;
         return 1;
@@ -20,10 +21,12 @@ int main(int argc, char* argv[]) {
     InterprocessCopyToolFactory factory(sharedMemoryName, logger);
     auto copyTool = factory.createCopyTool();
 
-    try {
+    try 
+    {
         copyTool->copy(sourcePath, destPath);
     }
-    catch (const std::exception& ex) {
+    catch (const std::exception& ex)
+    {
         std::cerr << "Exception caught in main: " << ex.what() << std::endl;
         return 1;
     }

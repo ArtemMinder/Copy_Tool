@@ -2,7 +2,7 @@
 
 #include <string>
 
-class IReader 
+class IReader
 {
 public:
     virtual ~IReader() = default;
@@ -10,5 +10,7 @@ public:
     virtual size_t read(char* buffer, size_t size) = 0;
     virtual void close() = 0;
 };
+
+
 
 

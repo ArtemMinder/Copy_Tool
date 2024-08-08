@@ -9,3 +9,4 @@ public:
     virtual void log(const std::string& message) = 0;
 };
 
+

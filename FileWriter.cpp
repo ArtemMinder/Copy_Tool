@@ -1,12 +1,13 @@
 #include "FileWriter.h"
 
-FileWriter::FileWriter(InterprocessBuffer& buffer)
-    : buffer(buffer) {}
+FileWriter::FileWriter(IBuffer& buffer, ISynchronization& sync)
+    : buffer(buffer), sync(sync) {}
 
 void FileWriter::open(const std::string& path) 
 {
     file.open(path, std::ios::binary);
-    if (!file.is_open()) {
+    if (!file.is_open())
+    {
         throw std::runtime_error("Cannot open file for writing: " + path);
     }
 }
@@ -14,11 +15,11 @@ void FileWriter::open(const std::string& path)
 size_t FileWriter::write(const char* buf, size_t size)
 {
     using namespace boost::interprocess;
-    scoped_lock<interprocess_mutex> lock(buffer.getMutex());
+    scoped_lock<interprocess_mutex> lock(sync.getMutex());
 
-    while (buffer.getSize() == 0 && !buffer.isDoneReading()) 
+    while (buffer.getSize() == 0 && !buffer.isDoneReading())
     {
-        buffer.getCondRead().wait(lock);
+        sync.getCondRead().wait(lock);
     }
 
     if (buffer.getSize() == 0 && buffer.isDoneReading())
@@ -30,7 +31,7 @@ size_t FileWriter::write(const char* buf, size_t size)
     std::memcpy(const_cast<char*>(buf), buffer.getData(), bytesToWrite);
     file.write(buf, bytesToWrite);
     buffer.setSize(0);
-    buffer.getCondWrite().notify_one();
+    sync.getCondWrite().notify_one();
 
     return bytesToWrite;
 }
